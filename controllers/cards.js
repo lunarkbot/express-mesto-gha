@@ -37,3 +37,43 @@ module.exports.createCard = (req, res) => {
       res.status(500).send({ message: err.message });
     });
 };
+
+module.exports.likeCard = (req, res) => {
+  Card.findByIdAndUpdate(
+    req.params.cardId,
+    { $addToSet: { likes: req.user._id } },
+    { new: true, runValidators: true },
+  )
+    .then((card) => res.send({
+      _id: card._id,
+      name: card.name,
+      link: card.link,
+    }))
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        res.status(400).send({ message: 'Переданы некорректные данные.' });
+        return;
+      }
+      res.status(500).send({ message: err.message });
+    });
+};
+
+module.exports.dislikeCard = (req, res) => {
+  Card.findByIdAndUpdate(
+    req.params.cardId,
+    { $pull: { likes: req.user._id } },
+    { new: true, runValidators: true },
+  )
+    .then((card) => res.send({
+      _id: card._id,
+      name: card.name,
+      link: card.link,
+    }))
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        res.status(400).send({ message: 'Переданы некорректные данные.' });
+        return;
+      }
+      res.status(500).send({ message: err.message });
+    });
+};
