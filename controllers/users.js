@@ -16,6 +16,6 @@ module.exports.createUser = (req, res) => {
   const { name, about, avatar } = req.body;
 
   User.create({name, about, avatar})
-    .then(user => res.send({_id, name, about, avatar}))
+    .then(user => res.send({_id: user._id, name, about, avatar }))
     .catch(err => res.status(500).send({ message: 'Произошла ошибка' }));
 }
