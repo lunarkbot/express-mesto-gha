@@ -54,6 +54,10 @@ module.exports.likeCard = (req, res) => {
         res.status(400).send({ message: 'Переданы некорректные данные.' });
         return;
       }
+      if (err.name === 'CastError') {
+        res.status(404).send({ message: `Карточка с ID ${err.value} не найдена.` });
+        return;
+      }
       res.status(500).send({ message: err.message });
     });
 };
@@ -72,6 +76,10 @@ module.exports.dislikeCard = (req, res) => {
     .catch((err) => {
       if (err.name === 'ValidationError') {
         res.status(400).send({ message: 'Переданы некорректные данные.' });
+        return;
+      }
+      if (err.name === 'CastError') {
+        res.status(404).send({ message: `Карточка с ID ${err.value} не найдена.` });
         return;
       }
       res.status(500).send({ message: err.message });
