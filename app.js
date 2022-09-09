@@ -24,7 +24,7 @@ app.use('/users', require('./routes/users'));
 app.use('/cards', require('./routes/cards'));
 
 app.patch('/*', (req, res) => {
-  res.send({ message: 'Неверный URL для запроса.' });
+  res.status(404).send({ message: 'Неверный URL для запроса.' });
 });
 
 app.listen(PORT);
