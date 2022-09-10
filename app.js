@@ -23,7 +23,7 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
 app.use('/users', require('./routes/users'));
 app.use('/cards', require('./routes/cards'));
 
-app.patch('/*', (req, res) => {
+app.all('/*', (req, res) => {
   res.status(404).send({ message: 'Неверный URL для запроса.' });
 });
 
