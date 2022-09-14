@@ -76,6 +76,9 @@ module.exports.createUser = (req, res) => {
             res.status(400).send({ message: ERROR_400 });
             return;
           }
+          if (err.code === 11000) {
+            res.status(409).send({ message: 'Данный email уже используется другим пользователем' });
+          }
           res.status(500).send({ message: err.message });
         });
     });
