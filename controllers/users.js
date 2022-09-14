@@ -13,6 +13,18 @@ module.exports.getUsers = (req, res) => {
     });
 };
 
+module.exports.getCurrentUser = (req, res) => {
+  const { _id } = req.user;
+
+  User.findById(_id)
+    .then((user) => {
+      res.send({ data: user })
+    })
+    .catch((err) => {
+      res.status(500).send({ message: err.message });
+    });
+};
+
 module.exports.getUserById = (req, res) => {
   User.findById(req.params.userId)
     .then((user) => {
