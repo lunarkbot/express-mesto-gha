@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const { isEmail } = require('validator');
+const { patternUrl } = require('../constants');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -20,8 +21,7 @@ const userSchema = new mongoose.Schema({
     default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
     validate: {
       validator(value) {
-        const reg = /^(https?:\/\/)(www\.)?[a-z1-9\-]{2,}\.[a-z]{2,}\/?[a-z0-9-\._~:\/?#\[\]@!$&'()*+,;=]*/gi;
-        return reg.test(value);
+        return patternUrl.test(value);
       },
       message: 'Введите корректный URL',
     }
