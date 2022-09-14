@@ -1,3 +1,4 @@
+const bcrypt = require('bcryptjs');
 const User = require('../models/user');
 
 const ERROR_400 = 'Переданы некорректные данные.';
@@ -30,21 +31,37 @@ module.exports.getUserById = (req, res) => {
 };
 
 module.exports.createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
+  const {
+    name,
+    about,
+    avatar,
+    email,
+    password,
+  } = req.body;
 
-  User.create({ name, about, avatar })
-    .then((user) => res.send({
-      _id: user._id,
-      name,
-      about,
-      avatar,
-    }))
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        res.status(400).send({ message: ERROR_400 });
-        return;
-      }
-      res.status(500).send({ message: err.message });
+  bcrypt.hash(password, 10)
+    .then((hash) => {
+      User.create({
+        name,
+        about,
+        avatar,
+        email,
+        password: hash,
+      })
+        .then((user) => res.send({
+          _id: user._id,
+          name,
+          about,
+          avatar,
+          email,
+        }))
+        .catch((err) => {
+          if (err.name === 'ValidationError') {
+            res.status(400).send({ message: ERROR_400 });
+            return;
+          }
+          res.status(500).send({ message: err.message });
+        });
     });
 };
 
