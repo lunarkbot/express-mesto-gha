@@ -1,24 +1,31 @@
 const Card = require('../models/card');
+const NotFoundError = require('../errors/not-found-error');
+const BadRequestError = require('../errors/bad-request-error');
+const UnauthorizedError = require('../errors/unauthorized-error');
 
 const ERROR_400 = 'Переданы некорректные данные.';
 const ERROR_404 = 'Карточка с указанным ID не найдена.';
 
-module.exports.getCards = (req, res) => {
+module.exports.getCards = (req, res, next) => {
   Card.find({})
     .then((cards) => res.send({ data: cards }))
-    .catch((err) => {
-      res.status(500).send({ message: err.message });
-    });
+    .catch(next);
 };
 
-module.exports.deleteCard = (req, res) => {
-  Card.findByIdAndRemove(req.params.cardId)
+module.exports.deleteCard = (req, res, next) => {
+  Card.findById(req.params.cardId)
     .then((card) => {
-      if (!card) {
-        res.status(404).send({ message: ERROR_404 });
+      if (card.owner !== req.user._id) {
+        res.status(401).send({ message: 'Нет прав доступа на удаление карточки' });
         return;
       }
-      res.send({ data: card });
+      Card.findByIdAndRemove(req.params.cardId)
+        .then((result) => {
+          res.send({ data: result });
+        })
+        .catch((err) => {
+          res.status(500).send({ message: err.message });
+        })
     })
     .catch((err) => {
       if (err.name === 'CastError') {
