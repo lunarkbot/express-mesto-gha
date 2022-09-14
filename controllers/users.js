@@ -6,6 +6,7 @@ const BadRequestError = require('../errors/bad-request-error');
 const UnauthorizedError = require('../errors/unauthorized-error');
 
 const ERROR_404 = 'Пользователь с указанным ID не найден.';
+const ERROR_400 = '400';
 
 module.exports.getUsers = (req, res, next) => {
   User.find({})
