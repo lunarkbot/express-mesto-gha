@@ -40,6 +40,11 @@ module.exports.createUser = (req, res) => {
     password,
   } = req.body;
 
+  if (!password) {
+    res.status(401).send({ message: 'Укажите пароль для пользователя' });
+    return;
+  }
+
   bcrypt.hash(password, 10)
     .then((hash) => {
       User.create({
