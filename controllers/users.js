@@ -4,9 +4,9 @@ const User = require('../models/user');
 const NotFoundError = require('../errors/not-found-error');
 const BadRequestError = require('../errors/bad-request-error');
 const UnauthorizedError = require('../errors/unauthorized-error');
+const ConflictError = require('../errors/conflict-error');
 
 const ERROR_404 = 'Пользователь с указанным ID не найден.';
-const ERROR_400 = '400';
 
 module.exports.getUsers = (req, res, next) => {
   User.find({})
@@ -19,7 +19,7 @@ module.exports.getCurrentUser = (req, res, next) => {
 
   User.findById(_id)
     .then((user) => {
-      res.send({ data: user })
+      res.send({ data: user });
     })
     .catch(next);
 };
@@ -41,7 +41,7 @@ module.exports.getUserById = (req, res, next) => {
     });
 };
 
-module.exports.createUser = (req, res) => {
+module.exports.createUser = (req, res, next) => {
   const {
     name,
     about,
@@ -51,8 +51,7 @@ module.exports.createUser = (req, res) => {
   } = req.body;
 
   if (!password) {
-    res.status(401).send({ message: 'Укажите пароль для пользователя' });
-    return;
+    throw new UnauthorizedError('Укажите пароль для пользователя');
   }
 
   bcrypt.hash(password, 10)
@@ -73,18 +72,18 @@ module.exports.createUser = (req, res) => {
         }))
         .catch((err) => {
           if (err.name === 'ValidationError') {
-            res.status(400).send({ message: ERROR_400 });
+            next(new BadRequestError());
             return;
           }
           if (err.code === 11000) {
-            res.status(409).send({ message: 'Данный email уже используется другим пользователем' });
+            next(new ConflictError());
           }
-          res.status(500).send({ message: err.message });
+          next(err);
         });
     });
 };
 
-module.exports.updateUser = (req, res) => {
+module.exports.updateUser = (req, res, next) => {
   const { name, about } = req.body;
 
   User.findOneAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
@@ -96,32 +95,32 @@ module.exports.updateUser = (req, res) => {
     }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send({ message: ERROR_400 });
+        next(new BadRequestError());
         return;
       }
       if (err.name === 'CastError') {
-        res.status(404).send({ message: ERROR_404 });
+        next(new NotFoundError(ERROR_404));
         return;
       }
-      res.status(500).send({ message: err.message });
+      next(err);
     });
 };
 
-module.exports.updateAvatar = (req, res) => {
+module.exports.updateAvatar = (req, res, next) => {
   const { avatar } = req.body;
 
   User.findOneAndUpdate(req.user._id, { avatar }, { new: true, runValidators: true })
     .then((user) => res.send({ _id: user._id, avatar: user.avatar }))
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
-        res.status(400).send({ message: ERROR_400 });
+        next(new BadRequestError());
         return;
       }
-      res.status(500).send({ message: err.message });
+      next(err);
     });
 };
 
-module.exports.login = (req, res) => {
+module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
 
   return User.findUserByCredentials(email, password)
@@ -139,7 +138,5 @@ module.exports.login = (req, res) => {
         })
         .end();
     })
-    .catch((err) => {
-      res.status(401).send({ message: err.message });
-    });
+    .catch(next);
 };

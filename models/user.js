@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema({
         return patternUrl.test(value);
       },
       message: 'Введите корректный URL',
-    }
+    },
   },
   email: {
     unique: true,

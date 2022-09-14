@@ -1,9 +1,7 @@
 const Card = require('../models/card');
 const NotFoundError = require('../errors/not-found-error');
 const BadRequestError = require('../errors/bad-request-error');
-const UnauthorizedError = require('../errors/unauthorized-error');
 
-const ERROR_400 = 'Переданы некорректные данные.';
 const ERROR_404 = 'Карточка с указанным ID не найдена.';
 
 module.exports.getCards = (req, res, next) => {
@@ -16,27 +14,24 @@ module.exports.deleteCard = (req, res, next) => {
   Card.findById(req.params.cardId)
     .then((card) => {
       if (card.owner !== req.user._id) {
-        res.status(401).send({ message: 'Нет прав доступа на удаление карточки' });
-        return;
+        throw new BadRequestError('Нет прав доступа на удаление карточки');
       }
       Card.findByIdAndRemove(req.params.cardId)
         .then((result) => {
           res.send({ data: result });
         })
-        .catch((err) => {
-          res.status(500).send({ message: err.message });
-        })
+        .catch(next);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(400).send({ message: ERROR_400 });
+        next(new BadRequestError());
         return;
       }
-      res.status(500).send({ message: err.message });
+      next(err);
     });
 };
 
-module.exports.createCard = (req, res) => {
+module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
   const owner = req.user._id;
 
@@ -44,14 +39,14 @@ module.exports.createCard = (req, res) => {
     .then((card) => res.send(card))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send({ message: ERROR_400 });
+        next(new BadRequestError());
         return;
       }
-      res.status(500).send({ message: err.message });
+      next(err);
     });
 };
 
-module.exports.likeCard = (req, res) => {
+module.exports.likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
@@ -59,8 +54,7 @@ module.exports.likeCard = (req, res) => {
   )
     .then((card) => {
       if (!card) {
-        res.status(404).send({ message: ERROR_404 });
-        return;
+        throw new NotFoundError(ERROR_404);
       }
       res.send({
         _id: card._id,
@@ -70,14 +64,14 @@ module.exports.likeCard = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
-        res.status(400).send({ message: ERROR_400 });
+        next(new BadRequestError());
         return;
       }
-      res.status(500).send({ message: err.message });
+      next(err);
     });
 };
 
-module.exports.dislikeCard = (req, res) => {
+module.exports.dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
@@ -85,8 +79,7 @@ module.exports.dislikeCard = (req, res) => {
   )
     .then((card) => {
       if (!card) {
-        res.status(404).send({ message: ERROR_404 });
-        return;
+        throw new NotFoundError(ERROR_404);
       }
       res.send({
         _id: card._id,
@@ -96,9 +89,9 @@ module.exports.dislikeCard = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
-        res.status(400).send({ message: ERROR_400 });
+        next(new BadRequestError());
         return;
       }
-      res.status(500).send({ message: err.message });
+      next(err);
     });
 };
