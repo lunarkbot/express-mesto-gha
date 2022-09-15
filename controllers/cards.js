@@ -13,9 +13,9 @@ module.exports.getCards = (req, res, next) => {
 
 module.exports.deleteCard = (req, res, next) => {
   Card.findById(req.params.cardId)
-    .then(result => {
+    .then((result) => {
       if (!result) {
-        throw NotFoundError(ERROR_404);
+        throw new NotFoundError(ERROR_404);
       }
 
       Card.findOneAndRemove({
@@ -34,37 +34,9 @@ module.exports.deleteCard = (req, res, next) => {
             return;
           }
           next(err);
-        })
+        });
     })
     .catch(next);
-
-  /*Card.findById(req.params.cardId)
-    .then((card) => {
-      if (!card?.owner) {
-        throw new NotFoundError(ERROR_404);
-      }
-
-      res.send({
-        owner: card.owner,
-        ich: req.user._id
-      })
-
-      if (card.owner.trim() !== req.user._id.trim()) {
-        throw new BadRequestError({[card.owner]: req.user._id});
-      }
-      Card.findByIdAndRemove(req.params.cardId)
-        .then((result) => {
-          res.send({ data: result });
-        })
-        .catch(next);
-    })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        next(new BadRequestError());
-        return;
-      }
-      next(err);
-    });*/
 };
 
 module.exports.createCard = (req, res, next) => {

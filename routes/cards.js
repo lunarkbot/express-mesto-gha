@@ -7,7 +7,7 @@ const {
   likeCard,
   dislikeCard,
 } = require('../controllers/cards');
-const {patternUrl} = require('../constants');
+const { patternUrl } = require('../constants');
 
 router.get('/', getCards);
 router.delete('/:cardId', celebrate({
