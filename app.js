@@ -2,11 +2,10 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
-const { errors, celebrate, Joi } = require('celebrate');
-const { login, createUser } = require('./controllers/users');
+const { errors } = require('celebrate');
 const auth = require('./middlewares/auth');
+const errorsHandler = require('./middlewares/errorsHandler');
 const NotFoundError = require('./errors/not-found-error');
-const { patternUrl } = require('./constants');
 
 const { PORT = 3000 } = process.env;
 const app = express();
@@ -21,24 +20,9 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
 
 app.listen(PORT);
 
-app.post('/signin', celebrate({
-  body: Joi.object().keys({
-    email: Joi.string().email().required(),
-    password: Joi.string().required(),
-  }),
-}), login);
-app.post('/signup', celebrate({
-  body: Joi.object().keys({
-    name: Joi.string().min(2).max(30),
-    about: Joi.string().min(2).max(30),
-    avatar: Joi.string().uri().regex(patternUrl),
-    email: Joi.string().required().email(),
-    password: Joi.string().required(),
-  }),
-}), createUser);
+app.use('/', require('./routes'));
 
 app.use(auth);
-
 app.use('/users', require('./routes/users'));
 app.use('/cards', require('./routes/cards'));
 
@@ -47,16 +31,4 @@ app.all('/*', (req, res, next) => {
 });
 
 app.use(errors());
-
-app.use((err, req, res, next) => {
-  const { statusCode = 500, message } = err;
-
-  res
-    .status(err.statusCode)
-    .send({
-      message: statusCode === 500
-        ? 'На сервере произошла ошибка'
-        : message,
-    });
-  next();
-});
+app.use(errorsHandler);
