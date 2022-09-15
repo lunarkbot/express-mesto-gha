@@ -3,7 +3,6 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const NotFoundError = require('../errors/not-found-error');
 const BadRequestError = require('../errors/bad-request-error');
-const UnauthorizedError = require('../errors/unauthorized-error');
 const ConflictError = require('../errors/conflict-error');
 
 const ERROR_404 = 'Пользователь с указанным ID не найден.';
@@ -50,10 +49,6 @@ module.exports.createUser = (req, res, next) => {
     password,
   } = req.body;
 
-  if (!password) {
-    throw new UnauthorizedError('Укажите пароль для пользователя');
-  }
-
   bcrypt.hash(password, 10)
     .then((hash) => {
       User.create({
@@ -80,13 +75,14 @@ module.exports.createUser = (req, res, next) => {
           }
           next(err);
         });
-    });
+    })
+    .catch(next);
 };
 
 module.exports.updateUser = (req, res, next) => {
   const { name, about } = req.body;
 
-  User.findOneAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
+  User.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
     .then((user) => res.send({
       _id: user._id,
       name: user.name,
@@ -109,7 +105,7 @@ module.exports.updateUser = (req, res, next) => {
 module.exports.updateAvatar = (req, res, next) => {
   const { avatar } = req.body;
 
-  User.findOneAndUpdate(req.user._id, { avatar }, { new: true, runValidators: true })
+  User.findByIdAndUpdate(req.user._id, { avatar }, { new: true, runValidators: true })
     .then((user) => res.send({ _id: user._id, avatar: user.avatar }))
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
