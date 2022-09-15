@@ -1,6 +1,7 @@
 const Card = require('../models/card');
 const NotFoundError = require('../errors/not-found-error');
 const BadRequestError = require('../errors/bad-request-error');
+const ForbiddenError = require('../errors/forbidden-error');
 
 const ERROR_404 = 'Карточка с указанным ID не найдена.';
 
@@ -11,23 +12,28 @@ module.exports.getCards = (req, res, next) => {
 };
 
 module.exports.deleteCard = (req, res, next) => {
-  Card.findOneAndRemove({
-    _id: req.params.cardId,
-    owner: req.user._id,
-  })
-    .then((card) => {
-      if (!card) {
-        throw new NotFoundError(ERROR_404);
-      }
-      res.send({ data: card });
+  Card.findById(req.params.cardId)
+    .then(result => {
+      Card.findOneAndRemove({
+        _id: req.params.cardId,
+        owner: req.user._id,
+      })
+        .then((card) => {
+          if (!card) {
+            throw new ForbiddenError();
+          }
+          res.send({ data: card });
+        })
+        .catch((err) => {
+          if (err.name === 'CastError') {
+            next(new BadRequestError());
+            return;
+          }
+          next(err);
+        })
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        next(new BadRequestError());
-        return;
-      }
-      next(err);
-    })
+    .catch(next);
+
   /*Card.findById(req.params.cardId)
     .then((card) => {
       if (!card?.owner) {
