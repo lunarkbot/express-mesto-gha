@@ -13,6 +13,9 @@ module.exports.getCards = (req, res, next) => {
 module.exports.deleteCard = (req, res, next) => {
   Card.findById(req.params.cardId)
     .then((card) => {
+      if (!card?.owner) {
+        throw new NotFoundError(ERROR_404);
+      }
       if (card.owner !== req.user._id) {
         throw new BadRequestError('Нет прав доступа на удаление карточки');
       }
