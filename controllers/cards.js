@@ -14,6 +14,10 @@ module.exports.getCards = (req, res, next) => {
 module.exports.deleteCard = (req, res, next) => {
   Card.findById(req.params.cardId)
     .then(result => {
+      if (!result) {
+        throw NotFoundError(ERROR_404);
+      }
+
       Card.findOneAndRemove({
         _id: req.params.cardId,
         owner: req.user._id,
