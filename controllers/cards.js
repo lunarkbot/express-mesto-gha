@@ -11,13 +11,36 @@ module.exports.getCards = (req, res, next) => {
 };
 
 module.exports.deleteCard = (req, res, next) => {
-  Card.findById(req.params.cardId)
+  Card.findOneAndRemove({
+    _id: req.params.cardId,
+    owner: req.user._id,
+  })
+    .then((card) => {
+      if (!card) {
+        throw new NotFoundError(ERROR_404);
+      }
+      res.send({ data: card });
+    })
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        next(new BadRequestError());
+        return;
+      }
+      next(err);
+    })
+  /*Card.findById(req.params.cardId)
     .then((card) => {
       if (!card?.owner) {
         throw new NotFoundError(ERROR_404);
       }
-      if (card.owner !== req.user._id) {
-        throw new BadRequestError('Нет прав доступа на удаление карточки');
+
+      res.send({
+        owner: card.owner,
+        ich: req.user._id
+      })
+
+      if (card.owner.trim() !== req.user._id.trim()) {
+        throw new BadRequestError({[card.owner]: req.user._id});
       }
       Card.findByIdAndRemove(req.params.cardId)
         .then((result) => {
@@ -31,7 +54,7 @@ module.exports.deleteCard = (req, res, next) => {
         return;
       }
       next(err);
-    });
+    });*/
 };
 
 module.exports.createCard = (req, res, next) => {
