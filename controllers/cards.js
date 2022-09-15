@@ -17,11 +17,11 @@ module.exports.deleteCard = (req, res, next) => {
       if (!result) {
         throw new NotFoundError(ERROR_404);
       }
+      if (!result.owner.equals(req.user._id)) {
+        throw new ForbiddenError();
+      }
 
-      Card.findOneAndRemove({
-        _id: req.params.cardId,
-        owner: req.user._id,
-      })
+      Card.findByIdAndRemove(req.params.cardId)
         .then((card) => {
           if (!card) {
             throw new ForbiddenError();
